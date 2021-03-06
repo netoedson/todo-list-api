@@ -12,4 +12,8 @@ export class UserService {
         return this.userModel.create(user);
     }
 
+    public findUser (email: string): Promise<UserDocument> {
+        return Promise.resolve(this.userModel.findOne({email}));
+    }
+
 }
