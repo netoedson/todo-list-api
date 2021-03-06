@@ -5,9 +5,17 @@ import * as argon2 from 'argon2';
 import { UserDocument } from 'src/user/schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
 
+type UserInfo = {
+  email: string;
+  id: string;
+  name: string;
+};
 @Injectable()
 export class AuthService {
-  constructor(private readonly userService: UserService, private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   public async signIn(request: LoginDto) {
     try {
@@ -20,12 +28,13 @@ export class AuthService {
         request.password,
       );
 
-      if (!correctPassword) throw new ForbiddenException('Invalid email or password');
+      if (!correctPassword)
+        throw new ForbiddenException('Invalid email or password');
 
       return {
         user: {
           name: user.name,
-          email: user.email
+          email: user.email,
         },
         token: this.generateToken(user),
       };
@@ -35,13 +44,23 @@ export class AuthService {
     }
   }
 
-  private generateToken(user: UserDocument) {
-      const payload = {
-          id: user._id,
-          email: user.email,
-          name: user.name
-      }
+  public async validateToken(token: string): Promise<UserDocument> {
+    const decoded = this.jwtService.decode(token) as UserInfo;
 
-      return this.jwtService.sign(payload);
+    if (!decoded) return null;
+
+    const user = await this.userService.findUser(decoded.email);
+    
+    return user;
+  }
+
+  private generateToken(user: UserDocument) {
+    const payload: UserInfo = {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+    };
+
+    return this.jwtService.sign(payload);
   }
 }
