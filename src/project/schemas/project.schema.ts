@@ -16,11 +16,11 @@ export class Project {
   })
   userId: Types.ObjectId;
 
-  @Prop({ type: [Task], default: [] })
+  @Prop([Task])
   tasks: Task[];
 
   public _id?: Types.ObjectId;
-  
+
   public createdAt?: Date;
 
   public updatedAt?: Date;
