@@ -9,12 +9,13 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { User as UserDecorator } from 'src/auth/decorator/user.decorator';
-import { ProjectCommonQuery } from 'src/types';
-import { User } from 'src/user/schemas/user.schema';
+import { User as UserDecorator } from '../auth/decorator/user.decorator';
+import { ProjectCommonQuery } from '../types';
+import { User } from '../user/schemas/user.schema';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateProjectDto } from './dtos/create-project.dto';
 import { UpdateTaskDto } from './dtos/update-task.dto';
+import { UpdateTaskGuard } from './guards/update-task.guard';
 import { AddTasksValidationPipe } from './pipes/add-tasks-validation.pipe';
 import { ProjectValidationPipe } from './pipes/project-validation.pipe';
 import { ProjectService } from './project.service';
@@ -107,6 +108,7 @@ export class ProjectController {
   }
 
   @Put('tasks/:id')
+  @UseGuards(UpdateTaskGuard)
   public async updateTask(
     @Body() body: UpdateTaskDto,
     @Param('id') taskId: string,
@@ -151,6 +153,7 @@ export class ProjectController {
   }
 
   @Delete('tasks/:id')
+  @UseGuards(UpdateTaskGuard)
   public async removeTask(
     @Param('id') taskId: string,
     @UserDecorator() user: User,

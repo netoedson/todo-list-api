@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ProjectCommonQuery, UpdateTask } from '../types';
@@ -40,7 +40,7 @@ export class ProjectService {
     return this.projectModel.findOneAndUpdate(
       query,
       {
-        $addToSet: {
+        $push: {
           tasks: { $each: tasks },
         },
       },
@@ -77,5 +77,17 @@ export class ProjectService {
       { $pull: { tasks: { _id: Types.ObjectId(taskId) } } },
       { new: true },
     );
+  }
+
+  public async checkIfTaskWasAlreadyComplete(taskId: string): Promise<boolean> {
+    const project = await this.projectModel.findOne({
+      'tasks._id': taskId,
+      tasks: { $elemMatch: { _id: taskId } },
+    });
+
+    if (!project) throw new NotFoundException('Task not found');
+    
+
+    return project.tasks.pop().completed;
   }
 }
