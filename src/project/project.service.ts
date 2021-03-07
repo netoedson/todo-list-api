@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { ProjectCommonQuery, UpdateTask } from '../types';
 import {
   Project,
   ProjectDocument,
   ProjectSchemaProvider,
 } from './schemas/project.schema';
+import { Task } from './schemas/task.schema';
 
 @Injectable()
 export class ProjectService {
@@ -22,19 +24,58 @@ export class ProjectService {
     return this.projectModel.find({ userId: userId });
   }
 
-  public updateProject(
-    projectId: string,
-    userId: Types.ObjectId,
-    title: string,
-  ) {
+  public updateProject(query: ProjectCommonQuery, title: string) {
     return this.projectModel.findOneAndUpdate(
-      { _id: projectId, userId },
+      query,
       { $set: { title } },
       { new: true },
     );
   }
 
-  public removeProject(projectId: string, userId: Types.ObjectId) {
-      return this.projectModel.findOneAndRemove({_id: projectId, userId});
+  public removeProject(query: ProjectCommonQuery) {
+    return this.projectModel.findOneAndRemove(query);
+  }
+
+  public addTasks(query: ProjectCommonQuery, tasks: Task[]) {
+    return this.projectModel.findOneAndUpdate(
+      query,
+      {
+        $addToSet: {
+          tasks: { $each: tasks },
+        },
+      },
+      { new: true },
+    );
+  }
+
+  public updateTask(
+    taskId: string,
+    update: UpdateTask,
+    userId: Types.ObjectId,
+  ) {
+    const mainKey = 'tasks.$.';
+    const updateSet = {};
+
+    if (update.completed) {
+      updateSet[`${mainKey}completed`] = update.completed;
+    }
+
+    if (update.description) {
+      updateSet[`${mainKey}description`] = update.description;
+    }
+
+    return this.projectModel.findOneAndUpdate(
+      { 'tasks._id': taskId, userId },
+      { $set: updateSet },
+      { new: true },
+    );
+  }
+
+  public removeTask(taskId: string, userId: Types.ObjectId) {
+    return this.projectModel.findOneAndUpdate(
+      { 'tasks._id': taskId, userId },
+      { $pull: { tasks: { _id: Types.ObjectId(taskId) } } },
+      { new: true },
+    );
   }
 }
