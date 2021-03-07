@@ -5,8 +5,11 @@ import * as helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.setGlobalPrefix('api');
   
   app.use(helmet());
+  app.enableCors();
   app.use(token);
 
   await app.listen(3000);
